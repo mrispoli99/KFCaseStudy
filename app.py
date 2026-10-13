@@ -58,6 +58,11 @@ def signed_k(x: float) -> str:
     return ("+" if x >= 0 else "-") + k(abs(x), 1)
 
 
+def md(text: str) -> str:
+    """Escape $ so Streamlit doesn't render text between two dollar signs as LaTeX math."""
+    return text.replace("$", "\\$")
+
+
 def pct(x: float, d: int = 0) -> str:
     return f"{x * 100:.{d}f}%"
 
@@ -82,7 +87,7 @@ def vl(spec: dict, data: pd.DataFrame | None, height: int = 300) -> None:
 def flag(text: str, level: str = "warn") -> None:
     icon, label = ("⚠️", "Watch") if level == "warn" else ("ℹ️", "Note")
     css = "kf-flag" if level == "warn" else "kf-flag info"
-    st.markdown(f'<div class="{css}">{icon} <b>{label}:</b> {text}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="{css}">{icon} <b>{label}:</b> {md(text)}</div>', unsafe_allow_html=True)
 
 
 @st.cache_data(show_spinner=False)
@@ -118,7 +123,7 @@ with tab_exec:
     c[0].metric("Q4 base forecast", k(tot["Base"]), f"{signed_k(tot['Base vs plan'])} vs plan")
     c[1].metric("Chance of reaching plan", pct(tot["Chance of plan"]),
                 help="Exact probability across every win/lose combination of the open Q4 deals.")
-    c[2].metric("Forecast range", f"{k(tot['Low'])}–{k(tot['High'])}", help="Low and high cases; see Q4 forecast tab.")
+    c[2].metric("Forecast range", md(f"{k(tot['Low'])}–{k(tot['High'])}"), help="Low and high cases; see Q4 forecast tab.")
     c[3].metric("Pipeline coverage", f"{tot['Coverage']:.1f}x", help="Open Q4 pipeline ÷ plan.")
     c[4].metric("B2C net revenue, Sep", k(sep["Net Revenue ($)"].sum()),
                 f"{signed_k(sep['Net Revenue ($)'].sum() - aug['Net Revenue ($)'].sum())} vs Aug")
@@ -219,7 +224,7 @@ with tab_fc:
                  "encoding": {"x": {"field": "Plan", "type": "quantitative"}, "text": {"field": "Label"}}},
             ],
         }, None, height=300)
-        st.caption(f"At plan ({k(a.plan_total)}): {pct(tot['Chance of plan'])}. Assumes deals win or lose independently.")
+        st.caption(md(f"At plan ({k(a.plan_total)}): {pct(tot['Chance of plan'])}. Assumes deals win or lose independently."))
     with r2:
         st.subheader("Base expected value by deal")
         dd = deals[["Opportunity ID", "Brand", "Common stage", "CRM Amount ($)", "Base ($)", "Base probability", "Slip risk"]].copy()
